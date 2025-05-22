@@ -9,6 +9,7 @@ function love.load()
   player.x = love.graphics.getWidth() / 2
   player.y = love.graphics.getHeight() / 2
   player.speed = 250
+  player.injured = false
 
   myFont = love.graphics.newFont(30)
 
@@ -23,17 +24,19 @@ end
 
 function love.update(dt)
   if gameState == "play" then
+    local currentSpeed = player.injured and player.speed * 1.5 or player.speed
+    
     if love.keyboard.isDown("d") then
-      player.x = player.x + player.speed * dt
+      player.x = player.x + currentSpeed * dt
     end
     if love.keyboard.isDown("a") then
-      player.x = player.x - player.speed * dt
+      player.x = player.x - currentSpeed * dt
     end
     if love.keyboard.isDown("w") then
-      player.y = player.y - player.speed * dt
+      player.y = player.y - currentSpeed * dt
     end
     if love.keyboard.isDown("s") then
-      player.y = player.y + player.speed * dt
+      player.y = player.y + currentSpeed * dt
     end
   end
   
@@ -41,7 +44,7 @@ function love.update(dt)
   player.x = math.max(0, math.min(player.x, love.graphics.getWidth()))
   player.y = math.max(0, math.min(player.y, love.graphics.getHeight()))
 
-  for _, zombie in ipairs(zombies) do
+  for i, zombie in ipairs(zombies) do
     local angle = zombiePlayerAngle(zombie)
     zombie.x = zombie.x + math.cos(angle) * zombie.speed * dt
     zombie.y = zombie.y + math.sin(angle) * zombie.speed * dt
@@ -51,9 +54,15 @@ function love.update(dt)
     zombie.y = math.max(0, math.min(zombie.y, love.graphics.getHeight()))
 
     if distance(player.x, player.y, zombie.x, zombie.y) < 30 then
-      for i, z in ipairs(zombies) do
-        zombies[i] = nil
+      if player.injured then
+        for j, z in ipairs(zombies) do
+          zombies[j] = nil
+        end
         gameState = "gameover"
+      else
+        player.injured = true
+        table.remove(zombies, i)
+        break
       end
     end
   end
@@ -97,7 +106,17 @@ function love.draw()
     end
 
     if gameState == "play" then
+      if player.injured then
+        love.graphics.setColor(238/255, 96/255, 96/255)
+      else
+        love.graphics.setColor(1, 1, 1)
+      end
+      
       love.graphics.draw(sprites.player, player.x, player.y, playerMouseAngle(), 1, 1, sprites.player:getWidth() / 2, sprites.player:getHeight() / 2)
+      
+      -- Reset color to white for other sprites
+      love.graphics.setColor(1, 1, 1)
+      
       love.graphics.printf("Score: " .. score, 0, love.graphics.getHeight() - 50, love.graphics.getWidth(), "center")
 
       for _, zombie in ipairs(zombies) do
@@ -130,10 +149,11 @@ function love.mousepressed(x, y, button)
     gameState = "start"
     player.x = love.graphics.getWidth() / 2
     player.y = love.graphics.getHeight() / 2
+    player.injured = false
     maxTime = 2
     timer = maxTime
     score = 0
-    end
+  end
 end
 
 function playerMouseAngle()
