@@ -1,6 +1,8 @@
 # Topdown Zombie Shooter
 
-A simple 2D zombie shooter game built with LÖVE2D framework.
+A simple 2D zombie shooter game built with LÖVE2D framework. 🧟🔫
+
+https://github.com/user-attachments/assets/1d4658cf-20f0-416e-a022-83138a3cec5d
 
 ## Description
 
