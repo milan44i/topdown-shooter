@@ -10,22 +10,31 @@ function love.load()
   player.y = love.graphics.getHeight() / 2
   player.speed = 250
 
+  myFont = love.graphics.newFont(30)
+
   zombies = {}
   bullets = {}
+
+  gameState = "start"
+  score = 0
+  maxTime = 2
+  timer = maxTime
 end
 
 function love.update(dt)
-  if love.keyboard.isDown("d") then
-    player.x = player.x + player.speed * dt
-  end
-  if love.keyboard.isDown("a") then
-    player.x = player.x - player.speed * dt
-  end
-  if love.keyboard.isDown("w") then
-    player.y = player.y - player.speed * dt
-  end
-  if love.keyboard.isDown("s") then
-    player.y = player.y + player.speed * dt
+  if gameState == "play" then
+    if love.keyboard.isDown("d") then
+      player.x = player.x + player.speed * dt
+    end
+    if love.keyboard.isDown("a") then
+      player.x = player.x - player.speed * dt
+    end
+    if love.keyboard.isDown("w") then
+      player.y = player.y - player.speed * dt
+    end
+    if love.keyboard.isDown("s") then
+      player.y = player.y + player.speed * dt
+    end
   end
   
   -- Keep player within screen boundaries
@@ -44,6 +53,7 @@ function love.update(dt)
     if distance(player.x, player.y, zombie.x, zombie.y) < 30 then
       for i, z in ipairs(zombies) do
         zombies[i] = nil
+        gameState = "gameover"
       end
     end
   end
@@ -62,35 +72,67 @@ function love.update(dt)
       if distance(bullet.x, bullet.y, zombie.x, zombie.y) < 20 then
         table.remove(zombies, j)
         table.remove(bullets, i)
+        score = score + 1
         break
       end
+    end
+  end
+
+  if gameState == "play" then
+    timer = timer - dt
+    if timer <= 0 then
+      spawnZombie()
+      maxTime = maxTime * 0.95
+      timer = maxTime
     end
   end
 end
 
 function love.draw()
     love.graphics.draw(sprites.background, 0, 0)
-    love.graphics.draw(sprites.player, player.x, player.y, playerMouseAngle(), 1, 1, sprites.player:getWidth() / 2, sprites.player:getHeight() / 2)
+    love.graphics.setFont(myFont)
 
-    for _, zombie in ipairs(zombies) do
-        love.graphics.draw(sprites.zombie, zombie.x, zombie.y, zombiePlayerAngle(zombie), 1, 1, sprites.zombie:getWidth() / 2, sprites.zombie:getHeight() / 2)
+    if gameState == "start" then
+        love.graphics.printf("Click anywehere to begin!", 0, 50, love.graphics.getWidth(), "center")
     end
 
-    for _, bullet in ipairs(bullets) do
-        love.graphics.draw(sprites.bullet, bullet.x, bullet.y, bullet.angle, 0.5, 0.5, sprites.bullet:getWidth() / 2, sprites.bullet:getHeight() / 2)
-    end
-end
+    if gameState == "play" then
+      love.graphics.draw(sprites.player, player.x, player.y, playerMouseAngle(), 1, 1, sprites.player:getWidth() / 2, sprites.player:getHeight() / 2)
 
-function love.keypressed(key)
-  if key == "space" then
-    spawnZombie()
-  end
+      for _, zombie in ipairs(zombies) do
+          love.graphics.draw(sprites.zombie, zombie.x, zombie.y, zombiePlayerAngle(zombie), 1, 1, sprites.zombie:getWidth() / 2, sprites.zombie:getHeight() / 2)
+      end
+
+      for _, bullet in ipairs(bullets) do
+          love.graphics.draw(sprites.bullet, bullet.x, bullet.y, bullet.angle, 0.5, 0.5, sprites.bullet:getWidth() / 2, sprites.bullet:getHeight() / 2)
+      end
+    end
+
+    if gameState == "gameover" then
+      love.graphics.printf("Game Over!", 0, 50, love.graphics.getWidth(), "center")
+      love.graphics.printf("Score: " .. score, 0, 90, love.graphics.getWidth(), "center")
+      love.graphics.printf("Click anywhere to go back to main menu", 0, 130, love.graphics.getWidth(), "center")
+    end
+
 end
 
 function love.mousepressed(x, y, button)
-  if button == 1 then
+  if gameState == "start" and button == 1 then
+    gameState = "play"
+  end
+
+  if gameState == "play" and button == 1 then
     spawnBullet()
   end
+
+  if gameState == "gameover" and button == 1 then
+    gameState = "start"
+    player.x = love.graphics.getWidth() / 2
+    player.y = love.graphics.getHeight() / 2
+    maxTime = 2
+    timer = maxTime
+    score = 0
+    end
 end
 
 function playerMouseAngle()
@@ -106,8 +148,15 @@ end
 
 function spawnZombie()
   local zombie = {}
-  zombie.x = math.random(0, love.graphics.getWidth())
-  zombie.y = math.random(0, love.graphics.getHeight())
+  if math.random() < 0.5 then
+    -- Spawn zombie at the top or bottom edge
+    zombie.x = math.random(0, love.graphics.getWidth())
+    zombie.y = (math.random() < 0.5) and 0 or love.graphics.getHeight()
+  else
+    -- Spawn zombie at the left or right edge
+    zombie.x = (math.random() < 0.5) and 0 or love.graphics.getWidth()
+    zombie.y = math.random(0, love.graphics.getHeight())
+  end
   zombie.speed = math.random(100, 200)
   table.insert(zombies, zombie)
 end
