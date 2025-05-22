@@ -93,11 +93,12 @@ function love.draw()
     love.graphics.setFont(myFont)
 
     if gameState == "start" then
-        love.graphics.printf("Click anywehere to begin!", 0, 50, love.graphics.getWidth(), "center")
+        love.graphics.printf("Click anywhere to begin!", 0, 50, love.graphics.getWidth(), "center")
     end
 
     if gameState == "play" then
       love.graphics.draw(sprites.player, player.x, player.y, playerMouseAngle(), 1, 1, sprites.player:getWidth() / 2, sprites.player:getHeight() / 2)
+      love.graphics.printf("Score: " .. score, 0, love.graphics.getHeight() - 50, love.graphics.getWidth(), "center")
 
       for _, zombie in ipairs(zombies) do
           love.graphics.draw(sprites.zombie, zombie.x, zombie.y, zombiePlayerAngle(zombie), 1, 1, sprites.zombie:getWidth() / 2, sprites.zombie:getHeight() / 2)
